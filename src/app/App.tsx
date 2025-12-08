@@ -23,9 +23,10 @@ import Switch from '@mui/material/Switch'
 import CssBaseline from '@mui/material/CssBaseline'
 import { containerSx } from '../TodolistItem.styles'
 import { NavButton } from '../NavButton'
-import { RootState } from './store'
 import { useAppDispatch } from '../common/hooks/useAppDispatch'
 import { useAppSelector } from '../common/hooks/useAppSelector'
+import { selectTasks } from '../model/tasks-selectors'
+import { selectTodolists } from '../model/todolists-selectors'
 
 export type Todolist = {
   id: string
@@ -46,8 +47,8 @@ export type TasksState = Record<string, Task[]>
 type ThemeMode = 'dark' | 'light'
 
 export const App = () => {
-  const todolists = useAppSelector<RootState, Todolist[]>(state => state.todolists)
-  const tasks = useAppSelector<RootState, TasksState>(state => state.tasks)
+  const todolists = useAppSelector(selectTodolists)
+  const tasks = useAppSelector(selectTasks)
 
   const dispatch = useAppDispatch()
 
