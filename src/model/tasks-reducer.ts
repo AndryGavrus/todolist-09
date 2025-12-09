@@ -1,7 +1,5 @@
-import { create } from '@mui/material/styles/createTransitions'
-import type { Task, TasksState } from '../app/App'
-import type { CreateTodolistAction, DeleteTodolistAction } from './todolists-reducer'
-import { createAction, nanoid } from '@reduxjs/toolkit'
+import type { TasksState } from '../app/App'
+import { createAction, createReducer, nanoid } from '@reduxjs/toolkit'
 
 const initialState: TasksState = {}
 
@@ -14,53 +12,25 @@ export const changeTaskStatusAC = createAction<{ todolistId: string, taskId: str
 export const changeTaskTitleAC =
   createAction<{ todolistId: string, taskId: string, title: string }>('tasks/changeTaskTitle')
 
-export const tasksReducer = (state: TasksState = initialState, action: Actions): TasksState => {
-  switch (action.type) {
-    case 'delete_task': {
-      return {
-        ...state,
-        [action.payload.todolistId]: state[action.payload.todolistId].filter(task => task.id !== action.payload.taskId)
-      }
-    }
-    case 'create_task': {
-      const newTask: Task = { title: action.payload.title, isDone: false, id: nanoid() }
-      return { ...state, [action.payload.todolistId]: [newTask, ...state[action.payload.todolistId]] }
-    }
-    case "change_task_status": {
-      return {
-        ...state,
-        [action.payload.todolistId]: state[action.payload.todolistId].map(task => task.id === action.payload.taskId ? { ...task, isDone: action.payload.isDone } : task)
-      }
-    }
-    case "change_task_title": {
-      return {
-        ...state,
-        [action.payload.todolistId]: state[action.payload.todolistId].map(task => task.id === action.payload.taskId ? { ...task, title: action.payload.title } : task)
-      }
-    }
-    case "create_todolist": {
-      return { ...state, [action.payload.id]: [] }
-    }
-    case "delete_todolist": {
-      const newState = { ...state }
-      delete newState[action.payload.id]
-      return newState
-    }
-    default:
-      return state
-  }
-}
+export const tasksReducer = createReducer(initialState, builder => (
+  builder
+    .addCase(deleteTaskAC, (state, action) => {
+      const tasks = state[action.payload.todolistId]
+      const index = tasks.findIndex(task => task.id === action.payload.taskId)
+      if (index !== -1) tasks.splice(index, 1)
+    })
+    .addCase(createTaskAC, (state, action) => {
+      state[action.payload.todolistId].unshift({ title: action.payload.title, isDone: false, id: nanoid() })
+    })
+    .addCase(changeTaskStatusAC, (state, action) => {
+      const tasks = state[action.payload.todolistId]
+      const index = tasks.findIndex(task => task.id === action.payload.taskId)
+      if (index !== -1) tasks[index].isDone = action.payload.isDone
+    })
+    .addCase(changeTaskTitleAC, (state, action) => {
+      const tasks = state[action.payload.todolistId]
+      const index = tasks.findIndex(task => task.id === action.payload.taskId)
+      if (index !== -1) tasks[index].title = action.payload.title
+    })
+))
 
-
-export type DeleteTaskAction = ReturnType<typeof deleteTaskAC>
-export type CreateTaskAction = ReturnType<typeof createTaskAC>
-export type ChangeTaskStatusAction = ReturnType<typeof changeTaskStatusAC>
-export type ChangeTaskTitleAction = ReturnType<typeof changeTaskTitleAC>
-
-type Actions =
-  | DeleteTaskAction
-  | CreateTaskAction
-  | ChangeTaskStatusAction
-  | ChangeTaskTitleAction
-  | CreateTodolistAction
-  | DeleteTodolistAction
